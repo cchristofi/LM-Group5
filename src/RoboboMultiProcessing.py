@@ -7,7 +7,7 @@ import numpy as np
 from neat.nn.feed_forward import FeedForwardNetwork
 from datetime import datetime
 from torch.utils.tensorboard import SummaryWriter
-
+import random
 #%%
 #np.seterr(divide = 'ignore') 
 np.seterr("raise")
@@ -42,7 +42,7 @@ def simulation(portnum, genomeID, net, fitness_dict):
         irs = [x if x!=False else 1 for x in rob.read_irs()]
         observation = np.log(np.array(irs))/10
         
-        act = 100 * (np.array(net.activate(observation)) * 2 -1)
+        act = 100 * (np.array(net.activate(observation)) * 2 - 1)
         #print(f"Predicted Action {act}")
         rob.move(act[0], act[1], 2000)
 
@@ -71,8 +71,9 @@ class PoolLearner:
         for genome_id, genome in genomes:
             nets.append((genome_id, genome, FeedForwardNetwork.create(genome, config)))
         print(f"Population Size: {len(nets)}")
-
         for i in range(0, len(nets)+1, self.num_instances):
+            tic = time.time()
+
             process_list = []
 
             for j, (genomeID, genome, net) in enumerate([x for x in nets[i: i + self.num_instances]]):
@@ -82,7 +83,9 @@ class PoolLearner:
             
             for process in process_list:
                 process.join()
-                
+            toc = time.time()
+        
+            print(f"\n\nThis batch of {len(process_list)} took {round(toc-tic)}sec\n\n")
             
         for genomeID, genome, _ in nets:
             genome.fitness = self.fitness_dict[genomeID]
@@ -141,4 +144,4 @@ if __name__ == "__main__":
         experiment_name = experiment_continuation
 
     tb = SummaryWriter(f"tb_runs/{experiment_name}")
-    run(num_gens = 5, num_instances = 1,  config = CONFIG, experiment_continuation = experiment_continuation)
+    run(num_gens = 5, num_instances = 10,  config = CONFIG, experiment_continuation = experiment_continuation)
