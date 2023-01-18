@@ -28,12 +28,12 @@ CONFIG = neat.config.Config(
     neat.stagnation.DefaultStagnation,
     'config/config_neat'
 )
-POSSIBLE_BOTS= [" ", "#0", "#2"]
+POSSIBLE_BOTS= ["", "#0", "#2"]
 
 #%%
 random.seed(123)
-def simulation(portnum, bot_number, genomeID, net, fitness_dict):
-    rob = robobo.SimulationRobobo(number=bot_number).connect(port = portnum)
+def simulation(portnum, bot_num, genomeID, net, fitness_dict):
+    rob = robobo.SimulationRobobo(bot_num).connect(port = portnum)
     rob.play_simulation()
     
     for t in range(MAX_TIMESTEPS):
@@ -45,16 +45,18 @@ def simulation(portnum, bot_number, genomeID, net, fitness_dict):
         rob.move(act[0], act[1])
 
     rob.pause_simulation()
-    fitness = rob.collected_food()
+    fitness = random.random()#rob.collected_food()
+    time.sleep(1)
+    rob.stop_world()
+    rob.wait_for_stop()
+    rob.disconnect()
     print(f"Genome: {genomeID}, fitness: {fitness}")
     if genomeID in fitness_dict.keys():
         fitness_dict[genomeID] += fitness/len(POSSIBLE_BOTS)
     else:
         fitness_dict[genomeID] = fitness/len(POSSIBLE_BOTS)
 
-    rob.stop_world()
-    rob.wait_for_stop()
-    rob.disconnect()
+
 
 class PoolLearner:
     
@@ -71,8 +73,8 @@ class PoolLearner:
         
         nets = []
         for genome_id, genome in genomes:
-            nets.append(genome_id, genome, FeedForwardNetwork.create(genome, config))
-        print(f"Population Size: {len(nets)}")
+            nets.append((genome_id, genome, FeedForwardNetwork.create(genome, config)))
+        print(f"Population Size: {len(nets)}\nArenas {len(POSSIBLE_BOTS)}")
         for i in range(0, len(nets)+1, self.num_instances):
 
             for bot_number in POSSIBLE_BOTS:
@@ -147,4 +149,4 @@ if __name__ == "__main__":
         experiment_name = experiment_continuation
 
     tb = SummaryWriter(f"tb_runs/{experiment_name}")
-    run(num_gens = 5, num_instances = 1,  config = CONFIG, experiment_continuation = experiment_continuation)
+    run(num_gens = 2, num_instances = 1,  config = CONFIG, experiment_continuation = experiment_continuation)
