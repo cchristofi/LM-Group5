@@ -112,3 +112,5 @@ CATKIN_IGNORE
 # vscode
 >>>>>>> Stashed changes
 /.vscode/
+*/tb_runs/*
+*/checkpoints/*
