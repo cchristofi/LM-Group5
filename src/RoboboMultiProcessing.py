@@ -9,9 +9,7 @@ from datetime import datetime
 from torch.utils.tensorboard import SummaryWriter
 import random
 #%%
-#np.seterr(divide = 'ignore') 
-np.seterr("raise")
-MAX_TIMESTEPS = 20
+MAX_TIMESTEPS = 30*2
 
 experiment_name = f"Robobo Experiment {datetime.now().strftime('%Y-%m-%d %H;%M')}"
 checkpoint_dir = 'checkpoints'
@@ -30,12 +28,12 @@ CONFIG = neat.config.Config(
     neat.stagnation.DefaultStagnation,
     'config/config_neat'
 )
-
+POSSIBLE_BOTS= [" ", "#0", "#2"]
 
 #%%
-
-def simulation(portnum, genomeID, net, fitness_dict):
-    rob = robobo.SimulationRobobo().connect(port = portnum)
+random.seed(123)
+def simulation(portnum, bot_number, genomeID, net, fitness_dict):
+    rob = robobo.SimulationRobobo(number=bot_number).connect(port = portnum)
     rob.play_simulation()
     
     for t in range(MAX_TIMESTEPS):
@@ -44,12 +42,16 @@ def simulation(portnum, genomeID, net, fitness_dict):
         
         act = 100 * (np.array(net.activate(observation)) * 2 - 1)
         #print(f"Predicted Action {act}")
-        rob.move(act[0], act[1], 2000)
+        rob.move(act[0], act[1])
 
     rob.pause_simulation()
-    food = rob.collected_food()
-    print(f"Genome: {genomeID}, fitness: {food}")
-    fitness_dict[genomeID] = food
+    fitness = rob.collected_food()
+    print(f"Genome: {genomeID}, fitness: {fitness}")
+    if genomeID in fitness_dict.keys():
+        fitness_dict[genomeID] += fitness/len(POSSIBLE_BOTS)
+    else:
+        fitness_dict[genomeID] = fitness/len(POSSIBLE_BOTS)
+
     rob.stop_world()
     rob.wait_for_stop()
     rob.disconnect()
@@ -69,23 +71,23 @@ class PoolLearner:
         
         nets = []
         for genome_id, genome in genomes:
-            nets.append((genome_id, genome, FeedForwardNetwork.create(genome, config)))
+            nets.append(genome_id, genome, FeedForwardNetwork.create(genome, config))
         print(f"Population Size: {len(nets)}")
         for i in range(0, len(nets)+1, self.num_instances):
-            tic = time.time()
 
-            process_list = []
-
-            for j, (genomeID, genome, net) in enumerate([x for x in nets[i: i + self.num_instances]]):
-                p =  mp.Process(target= simulation, args=(j+20000, genomeID, net, self.fitness_dict, ))
-                p.start()
-                process_list.append(p)
-            
-            for process in process_list:
-                process.join()
-            toc = time.time()
+            for bot_number in POSSIBLE_BOTS:
+                tic = time.time()
+                process_list = []
+                for j, (genomeID, genome, net) in enumerate([x for x in nets[i: i + self.num_instances]]):
+                    p =  mp.Process(target= simulation, args=(j+20000, bot_number, genomeID, net, self.fitness_dict, ))
+                    p.start()
+                    process_list.append(p)
+                
+                for process in process_list:
+                    process.join()
+                toc = time.time()
         
-            print(f"\n\nThis batch of {len(process_list)} took {round(toc-tic)}sec\n\n")
+                print(f"\n\nThis batch of {len(process_list)} took {round(toc-tic)}sec\n\n")
             
         for genomeID, genome, _ in nets:
             genome.fitness = self.fitness_dict[genomeID]
@@ -97,6 +99,7 @@ class PoolLearner:
         tb.add_scalar("AvgFitness", sum(fitnesses)/len(fitnesses), self.generation)
         tb.add_scalar("MaxFitness", max(fitnesses), self.generation)
         tb.add_scalar("MinFitness", min(fitnesses), self.generation)
+        tb.add_scalar("StdFitness", np.std(fitnesses), self.generation)
         tb.add_histogram("fitnesses", np.asarray(fitnesses), self.generation)
         tb.add_histogram("num_nodes", np.asarray(nodes), self.generation)
         tb.add_histogram("num_connections", np.asarray(connections), self.generation)
@@ -132,7 +135,7 @@ def run(num_gens, num_instances, config, experiment_continuation = None):
     pop.add_reporter(neat.Checkpointer(2, 150, filename_prefix=f'{checkpoint_dir}/{experiment_name} - Generation '))
     
     pool = PoolLearner(num_instances, generation = gen)
-    print(f'Running with: {num_instances} cores')
+    print(f'Running with: {num_instances} instances')
     while True:
         pop.run(pool.evaluate, num_gens)
         
@@ -144,4 +147,4 @@ if __name__ == "__main__":
         experiment_name = experiment_continuation
 
     tb = SummaryWriter(f"tb_runs/{experiment_name}")
-    run(num_gens = 5, num_instances = 10,  config = CONFIG, experiment_continuation = experiment_continuation)
+    run(num_gens = 5, num_instances = 1,  config = CONFIG, experiment_continuation = experiment_continuation)
