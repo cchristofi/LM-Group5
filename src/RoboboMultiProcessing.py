@@ -9,7 +9,7 @@ from datetime import datetime
 from torch.utils.tensorboard import SummaryWriter
 import random
 #%%
-MAX_TIMESTEPS = 30*2
+MAX_TIMESTEPS = 30
 
 experiment_name = f"Robobo Experiment {datetime.now().strftime('%Y-%m-%d %H;%M')}"
 checkpoint_dir = 'checkpoints'
@@ -47,7 +47,7 @@ def simulation(portnum, bot_num, genomeID, net, fitness_dict):
         timestep_fitness = sum(np.log(np.array([x for x in irs if x != False]))) / 10 + np.abs(model_output).sum()/2
         fitness += (timestep_fitness/MAX_TIMESTEPS)
         #print(f"Predicted Action {act}")
-        rob.move(act[0], act[1])
+        rob.move(act[0], act[1], 1000)
     #rob.pause_simulation()
     
     rob.stop_world()
@@ -152,4 +152,4 @@ if __name__ == "__main__":
         experiment_name = experiment_continuation
 
     tb = SummaryWriter(f"tb_runs/{experiment_name}")
-    run(num_gens = 100, num_instances = 1,  config = CONFIG, experiment_continuation = experiment_continuation)
+    run(num_gens = 100, num_instances = 5,  config = CONFIG, experiment_continuation = experiment_continuation)
