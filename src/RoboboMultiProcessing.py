@@ -144,4 +144,4 @@ if __name__ == "__main__":
         experiment_name = experiment_continuation
 
     tb = SummaryWriter(f"tb_runs/{experiment_name}")
-    run(num_gens = 5, num_instances = 10,  config = CONFIG, experiment_continuation = experiment_continuation)
+    run(num_gens = 5, num_instances = 1,  config = CONFIG, experiment_continuation = experiment_continuation)
