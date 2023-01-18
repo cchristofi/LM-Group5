@@ -28,27 +28,30 @@ CONFIG = neat.config.Config(
     neat.stagnation.DefaultStagnation,
     'config/config_neat'
 )
-POSSIBLE_BOTS= ["", "#0", "#2"]
+POSSIBLE_BOTS= [""]#"#0"]#, "#2"]
 
 #%%
 random.seed(123)
 def simulation(portnum, bot_num, genomeID, net, fitness_dict):
-    rob = robobo.SimulationRobobo(bot_num).connect(port = portnum)
+    rob = robobo.SimulationRobobo().connect(port = portnum)
     rob.play_simulation()
     
+    fitness = 0
     for t in range(MAX_TIMESTEPS):
-        irs = [x if x!=False else 1 for x in rob.read_irs()]
-        observation = np.log(np.array(irs))/10
+        irs = rob.read_irs()
+        model_input = np.array([x if x!=False else .3 for x in irs])
         
-        act = 100 * (np.array(net.activate(observation)) * 2 - 1)
+        model_output = np.array(net.activate(model_input)) * 2 - 1
+        act = 85 * model_output
+        
+        timestep_fitness = sum(np.log(np.array([x for x in irs if x != False]))) / 10 + np.abs(model_output).sum()/2
+        fitness += (timestep_fitness/MAX_TIMESTEPS)
         #print(f"Predicted Action {act}")
         rob.move(act[0], act[1])
-
-    rob.pause_simulation()
-    fitness = random.random()#rob.collected_food()
-    time.sleep(1)
+    #rob.pause_simulation()
+    
     rob.stop_world()
-    rob.wait_for_stop()
+    time.sleep(1)
     rob.disconnect()
     print(f"Genome: {genomeID}, fitness: {fitness}")
     if genomeID in fitness_dict.keys():
@@ -149,4 +152,4 @@ if __name__ == "__main__":
         experiment_name = experiment_continuation
 
     tb = SummaryWriter(f"tb_runs/{experiment_name}")
-    run(num_gens = 2, num_instances = 1,  config = CONFIG, experiment_continuation = experiment_continuation)
+    run(num_gens = 100, num_instances = 1,  config = CONFIG, experiment_continuation = experiment_continuation)
