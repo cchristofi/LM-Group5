@@ -10,6 +10,6 @@ try:
     from .hardware import HardwareRobobo
 except ModuleNotFoundError as e:
     if e.name == 'rospy':
-        print(f"WARNING! Was not able to load the hardware module, '{e.name}' module is missing")
+        pass#print(f"WARNING! Was not able to load the hardware module, '{e.name}' module is missing")
     else:
         raise e
