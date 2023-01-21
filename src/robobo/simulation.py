@@ -23,7 +23,7 @@ class SimulationRobobo(Robobo):
         else:
             raise VREPCommunicationError('Failed connecting to remote API server')
 
-        get_handles_timeout = 120.0
+        get_handles_timeout = 90.0
 
         startTime = time.time()
         while time.time() - startTime < get_handles_timeout:
@@ -31,7 +31,8 @@ class SimulationRobobo(Robobo):
                 self.initialize_handles()
                 return self
             except vrep.VrepApiError as _e:
-                print("Handle initialization failed, retrying.")
+                
+                print("Handle initialization failed, retrying.\nThis is likely caused by an invalid port or bot-number")
                 time.sleep(0.05)
 
         return False
