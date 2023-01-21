@@ -207,7 +207,7 @@ def run(num_gens, num_instances, config, experiment_continuation = None):
     
         
 if __name__ == "__main__":
-    experiment_continuation = "Robobo Experiment 2023-01-21 12;11"  # Either like "Robobo Experiment <date> <time>" or None
+    experiment_continuation = None  # Either like "Robobo Experiment <date> <time>" or None
     
     if experiment_continuation:
         experiment_name = experiment_continuation
