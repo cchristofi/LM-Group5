@@ -40,6 +40,13 @@ POSSIBLE_BOTS= [""]#"#0"]#, "#2"]
 
 #%%
 random.seed(123)
+def sort_checkpoint_population(pop):
+    population = [{"idx":idx, "genome":genome, "fitness":genome.fitness}  for idx, genome in pop.population.items()]
+    sorted_pop = sorted(population, key= lambda x: x["fitness"], reverse = True)
+        
+    return sorted_pop
+
+
 def simulate_example(portnum, bot_num, net):
      rob = robobo.SimulationRobobo(bot_num).connect(port = portnum)
      
@@ -60,8 +67,8 @@ def simulate_example(portnum, bot_num, net):
     
          rob.move(act[0], act[1], 1000)
      fitness += 3/50 * rob.collected_food()**2
-     # Max fitness: MAX_TIMESTEPS * (8 * 0 / 10 + (1+1)/2)/MAX_TIMESTEPS + 3/50 max_food^2
-     # -> 1 + 3/50 * 49 = 3.94, minimum is -INF as log(0) -> -inf
+     # Max fitness: MAX_TIMESTEPS * (8 * 0 / 10 + (1+1)/2)/MAX_TIMESTEPS + 3/50 max_food^2 -> 1 + 3/50 * 49 = 3.94,
+     # Minimum is -INF as log(0) -> -inf
     
      rob.stop_world()
      time.sleep(1)
@@ -135,7 +142,7 @@ class PoolLearner:
                     process.join()
                 toc = time.time()
         
-                print(f"\nInstances [({i+1} - {i+self.num_instances}) / {len(nets)}] This batch of {len(process_list)} took {round(toc-tic)}sec\n\n")
+                print(f"\nInstances [({i+1} - {min(i+self.num_instances, len(nets))}) / {len(nets)}] This batch of {len(process_list)} took {round(toc-tic)}sec\n\n")
             
         bestFitness_genomeID = max(self.fitness_dict, key = self.fitness_dict.get)
 
@@ -184,7 +191,7 @@ def run(num_gens, num_instances, config, experiment_continuation = None):
     if experiment_continuation:
         checkpoint, gen = get_last_checkpoint(experiment_continuation)
         print(f'Restoring checkpoint: {checkpoint}')
-        pop = neat.Checkpointer.restore_checkpoint(checkpoint)
+        pop = neat.Checkpointer.restore_checkpoint(checkpoint, config = CONFIG) # use config = None if you don't want to update the config
         
     else:
         gen = 0
@@ -197,13 +204,19 @@ def run(num_gens, num_instances, config, experiment_continuation = None):
     print(f'Running with: {num_instances} instances')
     while True:
         pop.run(pool.evaluate, num_gens)
-        
+    
         
 if __name__ == "__main__":
-    experiment_continuation = None # Either like "Robobo Experiment <date> <time>" or None
+    experiment_continuation = "Robobo Experiment 2023-01-21 12;11"  # Either like "Robobo Experiment <date> <time>" or None
     
     if experiment_continuation:
         experiment_name = experiment_continuation
 
     tb = SummaryWriter(f"tb_runs/{experiment_name}")
-    run(num_gens = 5, num_instances = 2,  config = CONFIG, experiment_continuation = experiment_continuation)
+    num_instances = input("Number of instances: ")
+    try:
+        num_instances = int(num_instances)
+    except:
+        num_instances = 1
+    
+    run(num_gens = 5, num_instances = num_instances,  config = CONFIG, experiment_continuation = experiment_continuation)
