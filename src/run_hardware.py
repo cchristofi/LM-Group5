@@ -27,7 +27,7 @@ CONFIG = neat.config.Config(
     neat.reproduction.DefaultReproduction,
     neat.species.DefaultSpeciesSet,
     neat.stagnation.DefaultStagnation,
-    'config/config_neat' # this will probs raise and error later on
+    'src/config/config_neat' # this will probs raise and error later on
 )
 
 #%%
