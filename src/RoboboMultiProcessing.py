@@ -142,7 +142,7 @@ class PoolLearner:
                     process.join()
                 toc = time.time()
         
-                print(f"\nInstances [({i+1} - {i+self.num_instances}) / {len(nets)}] This batch of {len(process_list)} took {round(toc-tic)}sec\n\n")
+                print(f"\nInstances [({i+1} - {min(i+self.num_instances, len(nets))}) / {len(nets)}] This batch of {len(process_list)} took {round(toc-tic)}sec\n\n")
             
         bestFitness_genomeID = max(self.fitness_dict, key = self.fitness_dict.get)
 
@@ -191,7 +191,7 @@ def run(num_gens, num_instances, config, experiment_continuation = None):
     if experiment_continuation:
         checkpoint, gen = get_last_checkpoint(experiment_continuation)
         print(f'Restoring checkpoint: {checkpoint}')
-        pop = neat.Checkpointer.restore_checkpoint(checkpoint)
+        pop = neat.Checkpointer.restore_checkpoint(checkpoint, config = CONFIG) # use config = None if you don't want to update the config
         
     else:
         gen = 0
@@ -207,7 +207,7 @@ def run(num_gens, num_instances, config, experiment_continuation = None):
     
         
 if __name__ == "__main__":
-    experiment_continuation = None # Either like "Robobo Experiment <date> <time>" or None
+    experiment_continuation = "Robobo Experiment 2023-01-21 12;11"  # Either like "Robobo Experiment <date> <time>" or None
     
     if experiment_continuation:
         experiment_name = experiment_continuation
