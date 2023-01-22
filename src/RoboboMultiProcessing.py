@@ -15,7 +15,7 @@ def is_port_in_use(port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(('localhost', port)) == 0
     
-MAX_TIMESTEPS = 30
+MAX_TIMESTEPS = 30 #has to be minute!!! according assignment 
 
 experiment_name = f"Robobo Experiment {datetime.now().strftime('%Y-%m-%d %H;%M')}"
 checkpoint_dir = 'checkpoints'
@@ -62,10 +62,13 @@ def simulate_example(portnum, bot_num, net):
          model_output = np.array(net.activate(model_input)) * 2 - 1
          act = 85 * model_output
          
-         timestep_fitness = sum(np.log(np.array([x for x in irs if x != False]))) / 10 + np.abs(model_output).sum()/2
-         fitness += (timestep_fitness/MAX_TIMESTEPS)
-    
+        #old fitness function 
+        # timestep_fitness = sum(np.log(np.array([x for x in irs if x != False]))) / 10 + np.abs(model_output).sum()/2
+        # fitness += (timestep_fitness/MAX_TIMESTEPS)
+        
          rob.move(act[0], act[1], 1000)
+    
+    
      fitness += 3/50 * rob.collected_food()**2
      # Max fitness: MAX_TIMESTEPS * (8 * 0 / 10 + (1+1)/2)/MAX_TIMESTEPS + 3/50 max_food^2 -> 1 + 3/50 * 49 = 3.94,
      # Minimum is -INF as log(0) -> -inf
@@ -75,6 +78,9 @@ def simulate_example(portnum, bot_num, net):
      rob.disconnect()
      print(f"Example simulation fitness: {fitness}\n")
 
+#function for the new fitness function, reading percentage green 
+#def image_green_percentage():
+#returned percentage value 
          
 def simulation(portnum, bot_num, genomeID, net, fitness_dict):
     rob = robobo.SimulationRobobo(bot_num).connect(port = portnum)
@@ -92,10 +98,18 @@ def simulation(portnum, bot_num, genomeID, net, fitness_dict):
         model_output = np.array(net.activate(model_input)) * 2 - 1
         act = 85 * model_output
         
-        timestep_fitness = sum(np.log(np.array([x for x in irs if x != False]))) / 10 + np.abs(model_output).sum()/2
-        fitness += (timestep_fitness/MAX_TIMESTEPS)
-
+     # old fitness function below: (Deleted after tuesday)
+     #   timestep_fitness = sum(np.log(np.array([x for x in irs if x != False]))) / 10 + np.abs(model_output).sum()/2
+     #   fitness += (timestep_fitness/MAX_TIMESTEPS)
+     
+        #meeting isis & mandy (to be continued, please let these comments here): 
+        # idea for punishment and rewarding in the new fitness value (but we needed more info on the camera input)
+        #percentage kunnen aanroepen van de functie per timestep (wel trager van, maar hij zit sws al in input model)
+        #hoe lager percentage > meer afstraffen, maar alleeeeen met hoge infrared values (anders gaat die naar verwachting ook niet rijden)
+        #image 4x4, tellen hoeveel percentage groen, afstraffen als er geen groen te zien is en hoge infrared values. 
         rob.move(act[0], act[1], 1000)
+        
+   
     fitness += 3/50 * rob.collected_food()**2
     # Max fitness: MAX_TIMESTEPS * (8 * 0 / 10 + (1+1)/2)/MAX_TIMESTEPS + 3/50 max_food^2
     # -> 1 + 3/50 * 49 = 3.94, minimum is -INF as log(0) -> -inf
@@ -161,14 +175,15 @@ class PoolLearner:
         nodes = [genome.size()[0] for genome_id, genome in genomes]
         connections = [genome.size()[1] for genome_id, genome in genomes]
         
-        tb.add_scalar("AvgFitness", sum(fitnesses)/len(fitnesses), self.generation)
-        tb.add_scalar("MedFitness", np.median(fitnesses), self.generation)
-        tb.add_scalar("MaxFitness", max(fitnesses), self.generation)
-        tb.add_scalar("MinFitness", min(fitnesses), self.generation)
-        tb.add_scalar("StdFitness", np.std(fitnesses), self.generation)
-        tb.add_histogram("fitnesses", np.asarray(fitnesses), self.generation)
-        tb.add_histogram("num_nodes", np.asarray(nodes), self.generation)
-        tb.add_histogram("num_connections", np.asarray(connections), self.generation)
+        #(for using tensorboar, uncomment these)
+        #tb.add_scalar("AvgFitness", sum(fitnesses)/len(fitnesses), self.generation)
+        #tb.add_scalar("MedFitness", np.median(fitnesses), self.generation)
+        #tb.add_scalar("MaxFitness", max(fitnesses), self.generation)
+        #tb.add_scalar("MinFitness", min(fitnesses), self.generation)
+        #tb.add_scalar("StdFitness", np.std(fitnesses), self.generation)
+        #tb.add_histogram("fitnesses", np.asarray(fitnesses), self.generation)
+        #tb.add_histogram("num_nodes", np.asarray(nodes), self.generation)
+        #tb.add_histogram("num_connections", np.asarray(connections), self.generation)
             
 def get_last_checkpoint(experiment_name):
     """Find the latest checkpoint in the current directory."""
