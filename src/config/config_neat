@@ -4,7 +4,7 @@
 fitness_criterion      = max
 fitness_threshold      = 10
 no_fitness_termination = False 
-pop_size               = 50
+pop_size               = 5
 reset_on_extinction    = False
 
 [DefaultStagnation]
@@ -64,7 +64,7 @@ node_delete_prob        = 0.2
 
 # network parameters
 num_hidden              = 0
-num_inputs              = 8
+num_inputs              = 17
 num_outputs             = 2
 
 # node response options

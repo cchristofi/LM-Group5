@@ -4,6 +4,7 @@ import robobo
 import neat
 import os
 import math
+import cv2
 import socket
 import numpy as np
 from neat.nn.feed_forward import FeedForwardNetwork
@@ -15,7 +16,7 @@ def is_port_in_use(port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(('localhost', port)) == 0
     
-MAX_TIMESTEPS = 30 #has to be minute!!! according assignment 
+MAX_TIMESTEPS = 60 #has to be minute!!! according assignment 
 
 experiment_name = f"Robobo Experiment {datetime.now().strftime('%Y-%m-%d %H;%M')}"
 checkpoint_dir = 'checkpoints'
@@ -38,6 +39,12 @@ CONFIG = neat.config.Config(
 SIMULATION_DEMO_PORT = 21000 if is_port_in_use(21000) else None
 POSSIBLE_BOTS= [""]#"#0"]#, "#2"]
 
+CAMERA_RESOLUTION = [128, 128]
+
+KERNEL_H = int(CAMERA_RESOLUTION[0]/3)
+KERNEL_W = int(CAMERA_RESOLUTION[1]/3)
+CONVOLUTION_KERNEL = np.full((KERNEL_H, KERNEL_W), 1/(KERNEL_W*KERNEL_H))
+
 #%%
 random.seed(123)
 def sort_checkpoint_population(pop):
@@ -46,6 +53,22 @@ def sort_checkpoint_population(pop):
         
     return sorted_pop
 
+def convolve(data, kernel, overlap):
+    kernel_h, kernel_w = kernel.shape
+    stride_h = kernel_h - overlap
+    stride_w = kernel_w - overlap
+    height, width = data.shape
+    
+    n_h_c = (height - kernel_h) // stride_h + 1
+    n_w_c = (width  - kernel_w)  // stride_w + 1
+    
+    result = np.zeros((n_h_c, n_w_c))
+    
+    for w in range(n_w_c):
+        for h in range(n_h_c):
+            X_slice = data[stride_h*h:(kernel_h +stride_h*h),stride_w*w:(kernel_w+stride_w*w)]
+            result[h,w] = np.sum(np.multiply(X_slice, kernel))
+    return result
 
 def simulate_example(portnum, bot_num, net):
      rob = robobo.SimulationRobobo(bot_num).connect(port = portnum)
@@ -57,7 +80,12 @@ def simulate_example(portnum, bot_num, net):
      fitness = 0
      for t in range(MAX_TIMESTEPS):
          irs = rob.read_irs()
-         model_input = np.array([x if x!=False else .3 for x in irs])
+         cam = rob.get_image_front()
+         hsv = cv2.cvtColor(cam, cv2.COLOR_BGR2HSV)
+         mask = cv2.inRange(hsv, (45, 70, 70), (85, 255, 255))/255
+         transformed_image = convolve(mask, CONVOLUTION_KERNEL, 0)
+         image_input = transformed_image.flatten()
+         model_input = np.array([x if x!=False else .3 for x in irs]+image_input.tolist())
          
          model_output = np.array(net.activate(model_input)) * 2 - 1
          act = 85 * model_output
@@ -69,7 +97,7 @@ def simulate_example(portnum, bot_num, net):
          rob.move(act[0], act[1], 1000)
     
     
-     fitness += 3/50 * rob.collected_food()**2
+     fitness += 4/50 * rob.collected_food()**2
      # Max fitness: MAX_TIMESTEPS * (8 * 0 / 10 + (1+1)/2)/MAX_TIMESTEPS + 3/50 max_food^2 -> 1 + 3/50 * 49 = 3.94,
      # Minimum is -INF as log(0) -> -inf
     
@@ -93,14 +121,21 @@ def simulation(portnum, bot_num, genomeID, net, fitness_dict):
     fitness = 0
     for t in range(MAX_TIMESTEPS):
         irs = rob.read_irs()
-        model_input = np.array([x if x!=False else .3 for x in irs])
+        cam = rob.get_image_front()
+        hsv = cv2.cvtColor(cam, cv2.COLOR_BGR2HSV)
+        mask = cv2.inRange(hsv, (45, 70, 70), (85, 255, 255))/255
+        transformed_image = convolve(mask, CONVOLUTION_KERNEL, 0)
+        image_input = transformed_image.flatten()
+        model_input = np.array([x if x!=False else .3 for x in irs] + image_input.tolist())
         
         model_output = np.array(net.activate(model_input)) * 2 - 1
         act = 85 * model_output
         
+        timestep_fitness = transformed_image[2,1]
+
      # old fitness function below: (Deleted after tuesday)
      #   timestep_fitness = sum(np.log(np.array([x for x in irs if x != False]))) / 10 + np.abs(model_output).sum()/2
-     #   fitness += (timestep_fitness/MAX_TIMESTEPS)
+        fitness += (timestep_fitness/MAX_TIMESTEPS)
      
         #meeting isis & mandy (to be continued, please let these comments here): 
         # idea for punishment and rewarding in the new fitness value (but we needed more info on the camera input)
@@ -110,7 +145,7 @@ def simulation(portnum, bot_num, genomeID, net, fitness_dict):
         rob.move(act[0], act[1], 1000)
         
    
-    fitness += 3/50 * rob.collected_food()**2
+    fitness += 3 * (rob.collected_food()/ 7) **3
     # Max fitness: MAX_TIMESTEPS * (8 * 0 / 10 + (1+1)/2)/MAX_TIMESTEPS + 3/50 max_food^2
     # -> 1 + 3/50 * 49 = 3.94, minimum is -INF as log(0) -> -inf
 
@@ -175,15 +210,14 @@ class PoolLearner:
         nodes = [genome.size()[0] for genome_id, genome in genomes]
         connections = [genome.size()[1] for genome_id, genome in genomes]
         
-        #(for using tensorboar, uncomment these)
-        #tb.add_scalar("AvgFitness", sum(fitnesses)/len(fitnesses), self.generation)
-        #tb.add_scalar("MedFitness", np.median(fitnesses), self.generation)
-        #tb.add_scalar("MaxFitness", max(fitnesses), self.generation)
-        #tb.add_scalar("MinFitness", min(fitnesses), self.generation)
-        #tb.add_scalar("StdFitness", np.std(fitnesses), self.generation)
-        #tb.add_histogram("fitnesses", np.asarray(fitnesses), self.generation)
-        #tb.add_histogram("num_nodes", np.asarray(nodes), self.generation)
-        #tb.add_histogram("num_connections", np.asarray(connections), self.generation)
+        tb.add_scalar("AvgFitness", sum(fitnesses)/len(fitnesses), self.generation)
+        tb.add_scalar("MedFitness", np.median(fitnesses), self.generation)
+        tb.add_scalar("MaxFitness", max(fitnesses), self.generation)
+        tb.add_scalar("MinFitness", min(fitnesses), self.generation)
+        tb.add_scalar("StdFitness", np.std(fitnesses), self.generation)
+        tb.add_histogram("fitnesses", np.asarray(fitnesses), self.generation)
+        tb.add_histogram("num_nodes", np.asarray(nodes), self.generation)
+        tb.add_histogram("num_connections", np.asarray(connections), self.generation)
             
 def get_last_checkpoint(experiment_name):
     """Find the latest checkpoint in the current directory."""
