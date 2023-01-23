@@ -29,7 +29,7 @@ def sort_checkpoint_population(pop):
     sorted_pop = sorted(population, key= lambda x: x["fitness"], reverse = True)        
     return sorted_pop
 
-def simulation(portnum, bot_num, genomeID, net): #, fitness_dict):
+def simulation(portnum, bot_num, genomeID, net):
     rob = robobo.SimulationRobobo(bot_num).connect(port = portnum)
     rob.play_simulation()
     
