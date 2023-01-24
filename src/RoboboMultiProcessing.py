@@ -106,9 +106,7 @@ def simulate_example(portnum, bot_num, net):
      rob.disconnect()
      print(f"Example simulation fitness: {fitness}\n")
 
-#function for the new fitness function, reading percentage green 
-#def image_green_percentage():
-#returned percentage value 
+
          
 def simulation(portnum, bot_num, genomeID, net, fitness_dict):
     rob = robobo.SimulationRobobo(bot_num).connect(port = portnum)
@@ -137,11 +135,7 @@ def simulation(portnum, bot_num, genomeID, net, fitness_dict):
      #   timestep_fitness = sum(np.log(np.array([x for x in irs if x != False]))) / 10 + np.abs(model_output).sum()/2
         fitness += (timestep_fitness/MAX_TIMESTEPS)
      
-        #meeting isis & mandy (to be continued, please let these comments here): 
-        # idea for punishment and rewarding in the new fitness value (but we needed more info on the camera input)
-        #percentage kunnen aanroepen van de functie per timestep (wel trager van, maar hij zit sws al in input model)
-        #hoe lager percentage > meer afstraffen, maar alleeeeen met hoge infrared values (anders gaat die naar verwachting ook niet rijden)
-        #image 4x4, tellen hoeveel percentage groen, afstraffen als er geen groen te zien is en hoge infrared values. 
+      
         rob.move(act[0], act[1], 1000)
         
    
