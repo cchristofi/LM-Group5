@@ -219,20 +219,24 @@ class PoolLearner:
         tb.add_histogram("num_nodes", np.asarray(nodes), self.generation)
         tb.add_histogram("num_connections", np.asarray(connections), self.generation)
             
-def get_last_checkpoint(experiment_name):
+def get_last_checkpoint(experiment_name, generation = None):
     """Find the latest checkpoint in the current directory."""
-    local_dir = os.path.join(os.path.dirname(__file__), checkpoint_dir)
-    checkpoints = [int(f.split('- Generation ')[-1]) for f in os.listdir(local_dir) if f.startswith(experiment_name)]
-    checkpoints = sorted(checkpoints)
-    
-    if not checkpoints:
-        return ''
-    for checkpoint in checkpoints[:-2]:
-        os.remove(f'{checkpoint_dir}/{experiment_name} - Generation {checkpoint}')
-    
-    last_number = checkpoints[-1]
-    latest_checkpoint = f'{checkpoint_dir}/{experiment_name} - Generation {last_number}'
-    return latest_checkpoint, last_number 
+    if generation:
+        return f'{checkpoint_dir}/{experiment_name} - Generation {generation}', generation
+    else:
+        local_dir = os.path.join(os.path.dirname(__file__), checkpoint_dir)
+
+        checkpoints = [int(f.split('- Generation ')[-1]) for f in os.listdir(local_dir) if f.startswith(experiment_name)]
+        checkpoints = sorted(checkpoints)
+        
+        if not checkpoints:
+            return ''
+        for checkpoint in checkpoints[:-4]:
+            os.remove(f'{checkpoint_dir}/{experiment_name} - Generation {checkpoint}')
+        
+        last_number = checkpoints[-1]
+        latest_checkpoint = f'{checkpoint_dir}/{experiment_name} - Generation {last_number}'
+        return latest_checkpoint, last_number 
         
 def run(num_gens, num_instances, config, experiment_continuation = None):
 
