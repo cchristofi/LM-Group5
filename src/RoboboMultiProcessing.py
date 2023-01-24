@@ -92,12 +92,14 @@ def simulate_example(portnum, bot_num, net):
          
         #old fitness function 
         # timestep_fitness = sum(np.log(np.array([x for x in irs if x != False]))) / 10 + np.abs(model_output).sum()/2
-        # fitness += (timestep_fitness/MAX_TIMESTEPS)
+         timestep_fitness = transformed_image[2,1]
+
+         fitness += (timestep_fitness/MAX_TIMESTEPS)
         
          rob.move(act[0], act[1], 1000)
     
     
-     fitness += 4/50 * rob.collected_food()**2
+     fitness += 3 * (rob.collected_food()/ 7) **3
      # Max fitness: MAX_TIMESTEPS * (8 * 0 / 10 + (1+1)/2)/MAX_TIMESTEPS + 3/50 max_food^2 -> 1 + 3/50 * 49 = 3.94,
      # Minimum is -INF as log(0) -> -inf
     
@@ -225,7 +227,7 @@ def get_last_checkpoint(experiment_name, generation = None):
         
         if not checkpoints:
             return ''
-        for checkpoint in checkpoints[:-4]:
+        for checkpoint in checkpoints[:-5]:
             os.remove(f'{checkpoint_dir}/{experiment_name} - Generation {checkpoint}')
         
         last_number = checkpoints[-1]
