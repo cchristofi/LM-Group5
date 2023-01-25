@@ -10,6 +10,7 @@ import numpy as np
 from neat.nn.feed_forward import FeedForwardNetwork
 from datetime import datetime
 from torch.utils.tensorboard import SummaryWriter
+import pandas as pd
 import random
 #%%
 def is_port_in_use(port):
@@ -80,6 +81,7 @@ def simulate_example(portnum, bot_num, net):
      fitness = 0
      for t in range(MAX_TIMESTEPS):
          irs = rob.read_irs()
+
          cam = rob.get_image_front()
          hsv = cv2.cvtColor(cam, cv2.COLOR_BGR2HSV)
          mask = cv2.inRange(hsv, (45, 70, 70), (85, 255, 255))/255
@@ -92,7 +94,7 @@ def simulate_example(portnum, bot_num, net):
          
         #old fitness function 
         # timestep_fitness = sum(np.log(np.array([x for x in irs if x != False]))) / 10 + np.abs(model_output).sum()/2
-         timestep_fitness = transformed_image[2,1]
+         timestep_fitness = transformed_image[2,1] + sum(model_output)/2
 
          fitness += (timestep_fitness/MAX_TIMESTEPS)
         
@@ -116,7 +118,8 @@ def simulation(portnum, bot_num, genomeID, net, fitness_dict):
     rob.play_simulation()
     rob.set_phone_pan(pan_position = 0*math.pi, pan_speed = .5)
     rob.set_phone_tilt(tilt_position = .55, tilt_speed = .1)
-    
+    cam = rob.get_image_front()
+    hsv = cv2.cvtColor(cam, cv2.COLOR_BGR2HSV)
     
     fitness = 0
     for t in range(MAX_TIMESTEPS):
@@ -131,7 +134,7 @@ def simulation(portnum, bot_num, genomeID, net, fitness_dict):
         model_output = np.array(net.activate(model_input)) * 2 - 1
         act = 85 * model_output
         
-        timestep_fitness = transformed_image[2,1]
+        timestep_fitness = transformed_image[2,1] + sum(model_output)/2
 
      # old fitness function below: (Deleted after tuesday)
      #   timestep_fitness = sum(np.log(np.array([x for x in irs if x != False]))) / 10 + np.abs(model_output).sum()/2
@@ -162,6 +165,7 @@ class PoolLearner:
         self.num_instances = num_instances
         self.generation = generation
         self.manager = mp.Manager()
+        self.pop_fitness_list = []
         
     def evaluate(self, genomes, config):
         self.fitness_dict = self.manager.dict()
@@ -203,6 +207,10 @@ class PoolLearner:
                 simulate_example(SIMULATION_DEMO_PORT, bot_number, best_net)
                 
         fitnesses = [genome.fitness for genome_id, genome in genomes]
+        
+        self.pop_fitness_list += [{"fitness":genome.fitness, "generation":self.generation, "genomeID":genome_id} for genome_id, genome in genomes]
+        pd.DataFrame.from_records(self.pop_fitness_list).to_csv(f"{checkpoint_dir}/{experiment_name}.csv")
+
         nodes = [genome.size()[0] for genome_id, genome in genomes]
         connections = [genome.size()[1] for genome_id, genome in genomes]
         
@@ -260,6 +268,7 @@ if __name__ == "__main__":
     
     if experiment_continuation:
         experiment_name = experiment_continuation
+
 
     tb = SummaryWriter(f"tb_runs/{experiment_name}")
     num_instances = input("Number of instances: ")
