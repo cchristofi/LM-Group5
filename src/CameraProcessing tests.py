@@ -9,6 +9,7 @@ rob.play_simulation()
 rob.set_phone_pan(pan_position = 1*math.pi, pan_speed = .5)
 rob.set_phone_tilt(tilt_position = .55, tilt_speed = .1)
 
+
 z = rob.get_image_front()
 hsv = cv2.cvtColor(z, cv2.COLOR_BGR2HSV)
 mask = cv2.inRange(hsv, (45, 70, 70), (85, 255, 255))
@@ -41,7 +42,7 @@ def convolve(data, kernel, overlap):
     return result
 
 
-data = mask
+data = mask/255
 kernel = np.full((128, 16), 1/(128*16))
 overlap = 0
 

@@ -114,3 +114,9 @@ CATKIN_IGNORE
 /.vscode/
 */tb_runs/*
 */checkpoints/*
+*/.spyproject/*
+*.spyproject
+.spyproject
+src/.spyderproject
+src/.spyproject
+.spyproject/config

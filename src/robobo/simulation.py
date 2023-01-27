@@ -259,7 +259,6 @@ class SimulationRobobo(Robobo):
 
         # get image
         resolution, image = self._vrep_get_vision_sensor_image(camera)
-
         # reshape image
         image = image[::-1]
         im_cv2 = np.array(image, dtype=np.uint8)
@@ -299,8 +298,8 @@ class SimulationRobobo(Robobo):
             vrep.simxPauseSimulation(self._clientID, vrep.simx_opmode_blocking)
         )
     
-    def play_simulation(self):
-        vrep.unwrap_vrep(vrep.simxSetBooleanParameter(self._clientID, vrep.sim_boolparam_realtime_simulation, False, vrep.simx_opmode_oneshot))
+    def play_simulation(self, realtime = False):
+        vrep.unwrap_vrep(vrep.simxSetBooleanParameter(self._clientID, vrep.sim_boolparam_realtime_simulation, realtime, vrep.simx_opmode_oneshot))
 
         vrep.unwrap_vrep(
             vrep.simxStartSimulation(self._clientID, vrep.simx_opmode_blocking)
