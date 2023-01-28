@@ -8,19 +8,18 @@ DEFAULT_NODE_NAMES = {0:"Left", 1:"Right",
               -6:"irs front-middle", -7:"irs front-left", -8:"irs side-left", -9:"cam top-left", -10:"cam top-middle",
               -11:"cam top-right", -12:"cam middle-left", -13:"cam middle", -14:"cam middle-right",
               -15:"cam bottom-left", -16:"cam bottom-middle", -17:"cam bottom-right"}
+DEFAULT_NODE_NAMES = {0:"Left", 1:"Right",
+              -1:"irs back-right", -2:"irs back-middle", -3:"irs back-left", -4:"irs side-right", -5:"irs front-right",
+              -6:"irs front-middle", -7:"irs front-left", -8:"irs side-left", -9:"groen - x", -10:"groen - y",
+              -11:"rood - x", -12:"rood - y"}
 #%%
 def draw_net(config, genome, view=False, filename=None, node_names=None, show_disabled=False, show_unused=False,
-             node_colors=None, fmt='png', title = None, cluster_nodes = False):
+             node_colors=None, fmt='png', title = None):
     """ Receives a genome and draws a neural network with arbitrary topology. """
     # Attributes for network nodes.
     if graphviz is None:
         warnings.warn("This display is not available due to a missing optional dependency (graphviz)")
         return
-
-    if cluster_nodes:
-        cluster_prefix = "cluster"
-    else:
-        cluster_prefix = ""
 
     if node_names is None:
         node_names = {}
@@ -61,8 +60,8 @@ def draw_net(config, genome, view=False, filename=None, node_names=None, show_di
 
     # Plot output nodes
     inputs = set()
-    with dot.subgraph(name=f"{cluster_prefix}_in") as c:
-        c.attr(rank = "min")
+    with dot.subgraph() as c:
+        #c.attr(rank = "min")
         c.attr(color = "blue")
         for k in config.genome_config.input_keys:
             inputs.add(k)
@@ -80,7 +79,7 @@ def draw_net(config, genome, view=False, filename=None, node_names=None, show_di
         node_names[k] = f"{node_names[k]}\nBias {genome.nodes[k].bias:.2f}"
 
     # Plot the hidden nodes       
-    with dot.subgraph(name = f"{cluster_prefix}_hidden") as c:
+    with dot.subgraph() as c:
         for n in used_nodes:
             if n in inputs or n in outputs:
                 continue
@@ -92,8 +91,8 @@ def draw_net(config, genome, view=False, filename=None, node_names=None, show_di
             #print(f"nodes: adding {str(n)}")
      
     # Plot the output nodes
-    with dot.subgraph(name = f"{cluster_prefix}_out") as c:
-        c.attr(rank = "max")
+    with dot.subgraph() as c:
+        #c.attr(rank = "max")
 
         for k in outputs:
             name = node_names.get(k, str(k))
@@ -124,11 +123,11 @@ def draw_net(config, genome, view=False, filename=None, node_names=None, show_di
 
 #%%
 if __name__ == "__main__":
-    pop = neat.Checkpointer.read_checkpoint("checkpoints/Robobo Experiment 2023-01-25 19;37 - Generation 99")
+    pop = neat.Checkpointer.read_checkpoint("checkpoints/Robobo Experiment 2023-01-28 15;01 - Generation 2")
     
     best_genome = max(pop.population, key = lambda x: pop.population.get(x).fitness)
     genome = pop.population[best_genome]
     
     z=draw_net(pop.config, genome,view=True, filename= "image", show_unused = False,
-               title = "Visualisation of best genome", cluster_nodes = False,
+               title = "Visualisation of best genome",
                node_names = DEFAULT_NODE_NAMES)
