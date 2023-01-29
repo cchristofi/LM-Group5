@@ -94,6 +94,8 @@ def convolve(data, kernel, overlap):
          
 def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_run = True, example_run = False):
     rob = robobo.SimulationRobobo(bot_num).connect(port = portnum)
+    #bot_num =""
+    #portnum = 20000
   
     rob.play_simulation()
     rob.set_phone_pan(pan_position = 0*math.pi, pan_speed = .5)
@@ -108,7 +110,9 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
         irs = rob.read_irs()
         front_middle_irs = irs[5]
         cam = rob.get_image_front()
-        #cv2.imwrite("test_pictures.png",cam)
+        #for hardware check: 
+        #im = cv2.imread("test_pictures.png")
+        cv2.imwrite("test_pictures.png",cam)
         hsv = cv2.cvtColor(cam, cv2.COLOR_BGR2HSV)
         
         mask = np.zeros(hsv.shape[:-1])
