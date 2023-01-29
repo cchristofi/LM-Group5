@@ -9,7 +9,7 @@ set /A num=%n%
 set /A end=%num%+19999
 
 FOR /L %%G IN (20000,1,%end%) DO (
-	start /d "C:\Program Files\V-REP3\V-REP_PRO_EDU" vrep.exe -h "C:\Program Files\V-REP3\V-REP_PRO_EDU\scenes\arena_approach.ttt" -gREMOTEAPISERVERSERVICE_%%G_FALSE_TRUE
+	start /d "C:\Program Files\V-REP3\V-REP_PRO_EDU" vrep.exe -h "C:\Program Files\V-REP3\V-REP_PRO_EDU\scenes\arena_push_easy.ttt" -gREMOTEAPISERVERSERVICE_%%G_FALSE_TRUE
 )
 goto :EOF
 :head
@@ -18,6 +18,6 @@ set /A num=%n%
 set /A end=%num%+19999
 
 FOR /L %%G IN (20000,1,%end%) DO (
-	start /d "C:\Program Files\V-REP3\V-REP_PRO_EDU" vrep.exe "C:\Program Files\V-REP3\V-REP_PRO_EDU\scenes\arena_approach.ttt" -gREMOTEAPISERVERSERVICE_%%G_FALSE_TRUE
+	start /d "C:\Program Files\V-REP3\V-REP_PRO_EDU" vrep.exe "C:\Program Files\V-REP3\V-REP_PRO_EDU\scenes\arena_push_easy.ttt" -gREMOTEAPISERVERSERVICE_%%G_FALSE_TRUE
 )
 goto :EOF
