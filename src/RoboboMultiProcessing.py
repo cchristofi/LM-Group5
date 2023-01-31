@@ -124,8 +124,8 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
         #in timestep_score: "distToRed":   (-1 * dis_red) / MAX_TIMESTEPS,
         
         #fitness function 3
-        dis_green = distance_to_target(green)
-        dis_red = distance_to_target(red) + 1.46 * (1-hasFoodInGrip)
+        dis_green = distance_to_target(green) + 1.46 * (1-hasFoodInGrip)
+        dis_red = distance_to_target(red)
 
         
         # Found scores per timestep
