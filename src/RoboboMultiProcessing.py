@@ -153,7 +153,7 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
     rob.disconnect()
     
     if log_run:
-        pd.DataFrame.from_records(scores).to_csv(f"{log_dir}/{experiment_name}_{genomeID}.csv", index = False)
+        pd.DataFrame.from_records(scores).to_csv(f"{log_dir}/{experiment_name}{'_' + str(genomeID) if genomeID else '_example'}.csv", index = False)
         
     if example_run:
         return
