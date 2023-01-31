@@ -120,7 +120,6 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
     distToGreen = sum([x["distToGreen"] for x in scores])
     BaseDetectFood = 2*rob.base_detects_food()
     fitness = distToRed + distToGreen + BaseDetectFood
-    print(f"{fitness=}")
 
     scores.append({"time":MAX_TIMESTEPS, "Cumulative":fitness})
 
@@ -137,7 +136,7 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
 
         
     # Returning the found fitness (and the fitness parts) to the evaluate function
-    print(f"Genome: {genomeID}, fitness: {fitness}")
+    print(f"Genome: {genomeID}, fitness: {fitness:.2f}, distToRed: {distToRed:.2f}, distToGreen: {distToGreen:.2f}")
     if genomeID in fitness_dict.keys():
         fitness_dict[genomeID]["fitness"] += fitness/len(POSSIBLE_BOTS)
         fitness_dict[genomeID]["fitness_parts"] = {"distToRed": distToRed, "distToGreen": distToGreen, "BDF": BaseDetectFood}
