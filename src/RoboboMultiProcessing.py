@@ -218,7 +218,7 @@ class PoolLearner:
         
         if SIMULATION_DEMO_PORT:
             for bot_number in POSSIBLE_BOTS:
-                simulation(SIMULATION_DEMO_PORT, bot_number, net = best_net, example_run = True)
+                simulation(SIMULATION_DEMO_PORT, bot_number, net = best_net, example_run = True, log_run=True)
                 
         fitnesses = [genome.fitness for genome_id, genome in genomes]
         

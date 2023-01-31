@@ -9,9 +9,8 @@ DEFAULT_NODE_NAMES = {0:"Left", 1:"Right",
               -11:"cam top-right", -12:"cam middle-left", -13:"cam middle", -14:"cam middle-right",
               -15:"cam bottom-left", -16:"cam bottom-middle", -17:"cam bottom-right"}
 DEFAULT_NODE_NAMES = {0:"Left", 1:"Right",
-              -1:"irs back-right", -2:"irs back-middle", -3:"irs back-left", -4:"irs side-right", -5:"irs front-right",
-              -6:"irs front-middle", -7:"irs front-left", -8:"irs side-left", -9:"groen - x", -10:"groen - y",
-              -11:"rood - x", -12:"rood - y"}
+                      -1:"groen - x", -2:"groen - y",
+                      -3:"rood - x", -4:"rood - y"}
 #%%
 def draw_net(config, genome, view=False, filename=None, node_names=None, show_disabled=False, show_unused=False,
              node_colors=None, fmt='png', title = None):
@@ -123,11 +122,11 @@ def draw_net(config, genome, view=False, filename=None, node_names=None, show_di
 
 #%%
 if __name__ == "__main__":
-    pop = neat.Checkpointer.read_checkpoint("checkpoints/Robobo Experiment 2023-01-28 15;01 - Generation 2")
+    pop = neat.Checkpointer.read_checkpoint("checkpoints/Robobo Experiment 2023-01-31 11;47 - Generation 4")
     
     best_genome = max(pop.population, key = lambda x: pop.population.get(x).fitness)
     genome = pop.population[best_genome]
     
-    z=draw_net(pop.config, genome,view=True, filename= "image", show_unused = False,
+    z=draw_net(pop.config, genome, view=True, filename= "image", show_unused = False,
                title = "Visualisation of best genome",
                node_names = DEFAULT_NODE_NAMES)
