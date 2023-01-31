@@ -101,11 +101,11 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
         hsv = cv2.cvtColor(cam, cv2.COLOR_BGR2HSV)
         
         if front_middle_irs and front_middle_irs < FOOD_DETECTION_THRESHOLD: #Holding red
-            green = extract_cluster(hsv, mask = [((45, 70, 70), (70, 255, 255))])
+            green = extract_cluster(hsv, mask = [((35, 70, 70), (70, 255, 255))])
             red = [0, 0]
         else:
             green = [0, 0]
-            red = extract_cluster(hsv, mask = [((170, 70, 70), (180, 255, 255)), ((0, 70, 70), (70, 255, 255))])
+            red = extract_cluster(hsv, mask = [((170, 70, 70), (180, 255, 255)), ((0, 70, 70), (10, 255, 255))])
         
         model_input = np.array(green + red) #[x if x!=False else .3 for x in irs] + 
         
@@ -150,16 +150,16 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
     time.sleep(1)
     rob.disconnect()
     
-    if example_run:
-        if log_run:
-            pd.DataFrame.from_records(scores).to_csv(f"{log_dir}/{experiment_name}_example.csv", index = False)
-        return
     if log_run:
         pd.DataFrame.from_records(scores).to_csv(f"{log_dir}/{experiment_name}_{genomeID}.csv", index = False)
+        
+    if example_run:
+        return
+
 
         
     # Returning the found fitness (and the fitness parts) to the evaluate function
-    print(f"Genome: {genomeID}, fitness: {fitness:.2f}, distToRed: {distToRed:.2f}, distToGreen: {distToGreen:.2f}")
+    print(f"Genome: {genomeID},\tfitness: {fitness:.2f},\tdistToRed: {distToRed:.2f},\tdistToGreen: {distToGreen:.2f}")
     if genomeID in fitness_dict.keys():
         fitness_dict[genomeID]["fitness"] += fitness/len(POSSIBLE_BOTS)
         fitness_dict[genomeID]["fitness_parts"] = {"distToRed": distToRed, "distToGreen": distToGreen, "BDF": BaseDetectFood}
