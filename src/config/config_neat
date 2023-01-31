@@ -4,7 +4,7 @@
 fitness_criterion      = max
 fitness_threshold      = 10
 no_fitness_termination = False 
-pop_size               = 50
+pop_size               = 25
 reset_on_extinction    = False
 
 [DefaultStagnation]
@@ -13,7 +13,7 @@ max_stagnation       = 10
 species_elitism      = 0
 
 [DefaultReproduction]
-elitism            = 2
+elitism            = 1
 survival_threshold = 0.2
 min_species_size   = 2
 
