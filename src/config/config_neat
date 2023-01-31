@@ -18,7 +18,7 @@ survival_threshold = 0.2
 min_species_size   = 2
 
 [DefaultSpeciesSet]
-compatibility_threshold = 2
+compatibility_threshold = 4
 
 [DefaultGenome]
 # node activation options
@@ -59,8 +59,8 @@ feed_forward            = True
 initial_connection      = full
 
 # node add/remove rates
-node_add_prob           = 0.2
-node_delete_prob        = 0.2
+node_add_prob           = 0.15
+node_delete_prob        = 0.15
 
 # network parameters
 num_hidden              = 0
@@ -82,7 +82,7 @@ structural_mutation_surer  = True
 
 # connection weight options
 weight_init_mean        = 0.0
-weight_init_stdev       = 5.0
+weight_init_stdev       = 2.5
 weight_init_type        = gaussian
 weight_max_value        = 10
 weight_min_value        = -10

@@ -123,3 +123,4 @@ src/.spyproject
 *.png
 *.csv
 /OLD/
+*/OLD/*
