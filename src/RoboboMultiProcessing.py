@@ -130,9 +130,11 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
             "time": t,
             "distToRed":   (-1.5 * dis_red) / MAX_TIMESTEPS,
             "distToGreen": (-1 * dis_green) / MAX_TIMESTEPS}
+        
+        timestep_score["Cumulative"] = sum([v for k, v in timestep_score.items() if k != "time"]) + (0 if t==0 else scores[-1]["Cumulative"])
+
         timestep_score = timestep_score | {f"irs{i}":v for i, v in enumerate(irs)} | {"green_x":green[0], "green_y":green[1], "red_x":red[0], "red_y":red[1]}
         #print(f"{timestep_score=}")
-        timestep_score["Cumulative"] = sum([v for k, v in timestep_score.items() if k != "time"]) + (0 if t==0 else scores[-1]["Cumulative"])
         scores.append(timestep_score)
         
       
