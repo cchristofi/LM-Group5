@@ -72,6 +72,16 @@ def extract_cluster(hsv, mask):
     y = 1-y/hsv.shape[0]
     return [x, y]
 
+
+def distance_to_target(target, bias=0):
+    distance_squared = np.square(target[0])+np.square(target[1])
+    distance = np.sqrt(distance_squared) #tussen 0 en 1.46 
+    
+    distance += (distance > 0 ) * bias 
+    
+    return distance 
+
+
          
 def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_run = True, example_run = False):
     rob = robobo.SimulationRobobo(bot_num).connect(port = portnum)
@@ -102,11 +112,24 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
         model_output = np.array(net.activate(model_input)) * 2 - 1
         act = MAX_SPEED * model_output
         
+        #fitness function 1
+        dis_green = distance_to_target(green)
+        dis_red = distance_to_target(red)
+        
+        #fitness function 2
+        #dis_green = distance_to_target(green)
+        #dis_red = distance_to_target(red, 1.46)
+        #in timestep_score: "distToRed":   (-1 * dis_red) / MAX_TIMESTEPS,
+        
+        #fitness function 3
+        #in timestep_score: "distToRed":   (-2 * dis_red) / MAX_TIMESTEPS
+
+        
         # Found scores per timestep
         timestep_score = {
             "time": t,
-            "distToRed":   -1.5 * (red[0]**2 + red[1]**2)**.5 / MAX_TIMESTEPS,
-            "distToGreen": -1 * (green[0]**2 + green[1]**2)**.5 / MAX_TIMESTEPS}
+            "distToRed":   (-1.5 * dis_red) / MAX_TIMESTEPS,
+            "distToGreen": (-1 * dis_green) / MAX_TIMESTEPS}
         timestep_score = timestep_score | {f"irs{i}":v for i, v in enumerate(irs)} | {"green_x":green[0], "green_y":green[1], "red_x":red[0], "red_y":red[1]}
         #print(f"{timestep_score=}")
         timestep_score["Cumulative"] = sum([v for k, v in timestep_score.items() if k != "time"]) + (0 if t==0 else scores[-1]["Cumulative"])
