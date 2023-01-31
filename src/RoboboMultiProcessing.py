@@ -261,7 +261,7 @@ def get_last_checkpoint(experiment_name, generation = None):
     else:
         local_dir = os.path.join(os.path.dirname(__file__), checkpoint_dir)
 
-        checkpoints = [int(f.split('- Generation ')[-1]) for f in os.listdir(local_dir) if f.startswith(experiment_name)]
+        checkpoints = [int(f.split('- Generation ')[-1]) for f in os.listdir(local_dir) if f.startswith(experiment_name) and ".csv" not in f]
         checkpoints = sorted(checkpoints)
         
         if not checkpoints:
@@ -301,7 +301,7 @@ if __name__ == "__main__":
     except:
         num_instances = 1
         
-    experiment_continuation = None  # Either like "Robobo Experiment <date> <time>" or None
+    experiment_continuation = "Robobo Experiment 2023-01-31 19;16"  # Either like "Robobo Experiment <date> <time>" or None
     
     if experiment_continuation:
         experiment_name = experiment_continuation
