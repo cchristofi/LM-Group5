@@ -12,6 +12,8 @@ from datetime import datetime
 from torch.utils.tensorboard import SummaryWriter
 import pandas as pd
 import random
+from matplotlib import pyplot as plt
+
 #%%
 def is_port_in_use(port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -43,7 +45,11 @@ CONFIG = neat.config.Config(
 SIMULATION_DEMO_PORT = 21000 if is_port_in_use(21000) else None
 POSSIBLE_BOTS= [""]#"#0"]#, "#2"]
 
-CAMERA_RESOLUTION = [128, 128]
+#hardware 
+CAMERA_RESOLUTION = [640, 480]
+#robobo simulation
+#CAMERA_RESOLUTION = [128, 128]
+
 
 KERNEL_H = int(CAMERA_RESOLUTION[0]/3)
 KERNEL_W = int(CAMERA_RESOLUTION[1]/3)
@@ -94,8 +100,8 @@ def convolve(data, kernel, overlap):
          
 def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_run = True, example_run = False):
     rob = robobo.SimulationRobobo(bot_num).connect(port = portnum)
-    #bot_num =""
-    #portnum = 20000
+   # bot_num =""
+   # portnum = 20000
   
     rob.play_simulation()
     rob.set_phone_pan(pan_position = 0*math.pi, pan_speed = .5)
@@ -111,15 +117,20 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
         front_middle_irs = irs[5]
         cam = rob.get_image_front()
         #for hardware check: 
-        #im = cv2.imread("test_pictures.png")
+        #im = cv2.imread("image1.jpeg")
         cv2.imwrite("test_pictures.png",cam)
         hsv = cv2.cvtColor(cam, cv2.COLOR_BGR2HSV)
         
+        
         mask = np.zeros(hsv.shape[:-1])
-       #mask += cv2.inRange(hsv, (45, 70, 70), (85, 255, 255))/255
-        maskvalues = [((170, 70, 70), (180, 255, 255)), ((0, 70, 70), (70, 255, 255))] #rood?
+        #mask += cv2.inRange(hsv, (30, 70, 70), (85, 255, 255))/255
+        maskvalues = [((170, 70, 70), (180, 255, 255)), ((0, 70, 70), (15, 255, 255))] #rood?
         for m_bottom, m_top in maskvalues:
             mask += cv2.inRange(hsv, m_bottom, m_top)/255
+            
+        plt.imshow(mask, interpolation='nearest')
+        plt.show()    
+        
         transformed_image = convolve(mask, CONVOLUTION_KERNEL, 0) 
         
         if front_middle_irs and front_middle_irs < 0.2: #Holding red
