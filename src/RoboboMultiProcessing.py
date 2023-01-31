@@ -18,7 +18,7 @@ def is_port_in_use(port):
         return s.connect_ex(('localhost', port)) == 0
     
     
-MAX_TIMESTEPS = 10 #has to be minute!!! according assignment 
+MAX_TIMESTEPS = 60 #has to be minute!!! according assignment 
 
 experiment_name = f"Robobo Experiment {datetime.now().strftime('%Y-%m-%d %H;%M')}"
 checkpoint_dir = 'checkpoints'
@@ -27,7 +27,7 @@ log_dir = "log"
 def mkdir(dir_name: str):
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
-mkdir(experiment_name)
+
 mkdir(checkpoint_dir)
 mkdir(log_dir)
 
@@ -105,10 +105,10 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
         # Found scores per timestep
         timestep_score = {
             "time": t,
-            "Seeing Green":   (random.random()+5) / MAX_TIMESTEPS,
-            "Moving forward": random.random()  /  MAX_TIMESTEPS}
+            "distToRed":   -1.5 * (red[0]**2 + red[1]**2)**.5 / MAX_TIMESTEPS,
+            "distToGreen": -1 * (green[0]**2 + green[1]**2)**.5 / MAX_TIMESTEPS}
         timestep_score = timestep_score | {f"irs{i}":v for i, v in enumerate(irs)} | {"green_x":green[0], "green_y":green[1], "red_x":red[0], "red_y":red[1]}
-        print(f"{timestep_score=}")
+        #print(f"{timestep_score=}")
         timestep_score["Cumulative"] = sum([v for k, v in timestep_score.items() if k != "time"]) + (0 if t==0 else scores[-1]["Cumulative"])
         scores.append(timestep_score)
         
@@ -116,13 +116,10 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
         rob.move(act[0], act[1], 1000)
         
     # Accumulation of the different fitness parts
-    SeeingGreen   = sum([x["Seeing Green"]   for x in scores])
-    print(f"{SeeingGreen=}")
-    MovingForward = sum([x["Moving forward"] for x in scores])
-    print(f"{MovingForward=}")
-    BaseDetectFood = rob.base_detects_food()
-    print(f"{BaseDetectFood=}")
-    fitness = SeeingGreen + MovingForward + BaseDetectFood
+    distToRed   = sum([x["distToRed"]   for x in scores])
+    distToGreen = sum([x["distToGreen"] for x in scores])
+    BaseDetectFood = 2*rob.base_detects_food()
+    fitness = distToRed + distToGreen + BaseDetectFood
     print(f"{fitness=}")
 
     scores.append({"time":MAX_TIMESTEPS, "Cumulative":fitness})
@@ -143,10 +140,10 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
     print(f"Genome: {genomeID}, fitness: {fitness}")
     if genomeID in fitness_dict.keys():
         fitness_dict[genomeID]["fitness"] += fitness/len(POSSIBLE_BOTS)
-        fitness_dict[genomeID]["fitness_parts"] = {"SG": SeeingGreen, "MF": MovingForward, "BDF": BaseDetectFood}
+        fitness_dict[genomeID]["fitness_parts"] = {"distToRed": distToRed, "distToGreen": distToGreen, "BDF": BaseDetectFood}
     else:
         fitness_dict[genomeID] = {"fitness":fitness/len(POSSIBLE_BOTS),
-                                  "fitness_parts": {"SG": SeeingGreen, "MF": MovingForward, "BDF": BaseDetectFood}}
+                                  "fitness_parts": {"distToRed": distToRed, "distToGreen": distToGreen, "BDF": BaseDetectFood}}
         
 
 
@@ -224,6 +221,9 @@ class PoolLearner:
             scores = [v["fitness_parts"][part] for k, v in self.fitness_dict.items()]
             tb.add_scalar(f"Avg{part}", sum(scores)/len(scores), self.generation)
             tb.add_scalar(f"Max{part}", max(scores), self.generation)
+            tb.add_scalar(f"Med{part}", np.median(scores), self.generation)
+            tb.add_histogram(part, np.asarray(scores), self.generation)
+
 
         
         
