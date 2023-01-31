@@ -43,11 +43,9 @@ CONFIG = neat.config.Config(
 SIMULATION_DEMO_PORT = 21000 if is_port_in_use(21000) else None
 POSSIBLE_BOTS= [""]#"#0"]#, "#2"]
 
-CAMERA_RESOLUTION = [128, 128]
+FOOD_DETECTION_THRESHOLD = 0.07
+MAX_SPEED = 75
 
-KERNEL_H = int(CAMERA_RESOLUTION[0]/3)
-KERNEL_W = int(CAMERA_RESOLUTION[1]/3)
-CONVOLUTION_KERNEL = np.full((KERNEL_H, KERNEL_W), 1/(KERNEL_W*KERNEL_H))
 
 #%%
 random.seed(123)
@@ -92,17 +90,17 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
         cam = rob.get_image_front()
         hsv = cv2.cvtColor(cam, cv2.COLOR_BGR2HSV)
         
-        if front_middle_irs and front_middle_irs < 0.2: #Holding red
+        if front_middle_irs and front_middle_irs < FOOD_DETECTION_THRESHOLD: #Holding red
             green = extract_cluster(hsv, mask = [((45, 70, 70), (70, 255, 255))])
             red = [0, 0]
         else:
             green = [0, 0]
             red = extract_cluster(hsv, mask = [((170, 70, 70), (180, 255, 255)), ((0, 70, 70), (70, 255, 255))])
         
-        model_input = np.array([x if x!=False else .3 for x in irs] + green + red)
+        model_input = np.array(green + red) #[x if x!=False else .3 for x in irs] + 
         
         model_output = np.array(net.activate(model_input)) * 2 - 1
-        act = 75 * model_output
+        act = MAX_SPEED * model_output
         
         # Found scores per timestep
         timestep_score = {
