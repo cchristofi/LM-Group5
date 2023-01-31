@@ -122,3 +122,4 @@ src/.spyproject
 .spyproject/config
 *.png
 *.csv
+/OLD/
