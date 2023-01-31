@@ -14,7 +14,7 @@ random.seed(123)
 MAX_TIMESTEPS = 60
 
 checkpoint_dir = 'checkpoints'
-experiment_name = 'Robobo Experiment 2023-01-25 18;16 - Generation 25'
+experiment_name = 'Robobo Experiment 2023-01-31 14;02 - Generation 25'
 
 CONFIG = neat.config.Config(
     neat.genome.DefaultGenome,
@@ -104,4 +104,4 @@ else:
             genome = sorted_list[i]['genome']
             break
     
-simulation(20000, "", FeedForwardNetwork.create(genome, CONFIG))
+simulation(19999, "", FeedForwardNetwork.create(genome, CONFIG))
