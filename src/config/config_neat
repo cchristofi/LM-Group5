@@ -4,7 +4,7 @@
 fitness_criterion      = max
 fitness_threshold      = 10
 no_fitness_termination = False 
-pop_size               = 25
+pop_size               = 50
 reset_on_extinction    = False
 
 [DefaultStagnation]
@@ -13,12 +13,12 @@ max_stagnation       = 10
 species_elitism      = 0
 
 [DefaultReproduction]
-elitism            = 1
+elitism            = 2
 survival_threshold = 0.2
-min_species_size   = 2
+min_species_size   = 10
 
 [DefaultSpeciesSet]
-compatibility_threshold = 4
+compatibility_threshold = 2
 
 [DefaultGenome]
 # node activation options
