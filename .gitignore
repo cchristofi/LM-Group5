@@ -123,3 +123,8 @@ src/.spyproject
 *.png
 *.csv
 Start multiple VREP instances.bat
+
+/OLD/
+*/OLD/*
+*.png
+*.jpg

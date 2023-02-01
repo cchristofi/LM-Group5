@@ -100,7 +100,9 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
         cam = rob.get_image_front()
         hsv = cv2.cvtColor(cam, cv2.COLOR_BGR2HSV)
         
-        if front_middle_irs and front_middle_irs < FOOD_DETECTION_THRESHOLD: #Holding red
+        hasFoodInGrip = front_middle_irs and front_middle_irs < FOOD_DETECTION_THRESHOLD
+        
+        if hasFoodInGrip:
             green = extract_cluster(hsv, mask = [((35, 70, 70), (70, 255, 255))])
             red = [0, 0]
         else:
@@ -113,8 +115,8 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
         act = MAX_SPEED * model_output
         
         #fitness function 1
-        dis_green = distance_to_target(green)
-        dis_red = distance_to_target(red)
+        #dis_green = distance_to_target(green)
+        #dis_red = distance_to_target(red)
         
         #fitness function 2
         #dis_green = distance_to_target(green)
@@ -122,13 +124,14 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
         #in timestep_score: "distToRed":   (-1 * dis_red) / MAX_TIMESTEPS,
         
         #fitness function 3
-        #in timestep_score: "distToRed":   (-2 * dis_red) / MAX_TIMESTEPS
+        dis_green = distance_to_target(green) + 1.46 * (1-hasFoodInGrip)
+        dis_red = distance_to_target(red)
 
         
         # Found scores per timestep
         timestep_score = {
             "time": t,
-            "distToRed":   (-1.5 * dis_red) / MAX_TIMESTEPS,
+            "distToRed":   (-1 * dis_red) / MAX_TIMESTEPS,
             "distToGreen": (-1 * dis_green) / MAX_TIMESTEPS}
         
         timestep_score["Cumulative"] = sum([v for k, v in timestep_score.items() if k != "time"]) + (0 if t==0 else scores[-1]["Cumulative"])
@@ -143,7 +146,7 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
     # Accumulation of the different fitness parts
     distToRed   = sum([x["distToRed"]   for x in scores])
     distToGreen = sum([x["distToGreen"] for x in scores])
-    BaseDetectFood = 2*rob.base_detects_food()
+    BaseDetectFood = 3*rob.base_detects_food()
     fitness = distToRed + distToGreen + BaseDetectFood
 
     scores.append({"time":MAX_TIMESTEPS, "Cumulative":fitness})
