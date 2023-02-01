@@ -234,7 +234,7 @@ class PoolLearner:
         tb.add_histogram("num_nodes", np.asarray(nodes), self.generation)
         tb.add_histogram("num_connections", np.asarray(connections), self.generation)
             
-        print(f"{self.fitness_dict=}")
+
         for part in self.fitness_dict[genome_id]["fitness_parts"].keys():
             scores = [v["fitness_parts"][part] for k, v in self.fitness_dict.items()]
             tb.add_scalar(f"Avg{part}", sum(scores)/len(scores), self.generation)
