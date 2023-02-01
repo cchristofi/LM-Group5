@@ -122,7 +122,7 @@ def draw_net(config, genome, view=False, filename=None, node_names=None, show_di
 
 #%%
 if __name__ == "__main__":
-    pop = neat.Checkpointer.read_checkpoint("checkpoints/Robobo Experiment 2023-01-31 11;47 - Generation 4")
+    pop = neat.Checkpointer.read_checkpoint("checkpoints/Robobo Experiment 2023-02-01 13;05 - Generation 0")
     
     best_genome = max(pop.population, key = lambda x: pop.population.get(x).fitness)
     genome = pop.population[best_genome]
@@ -130,3 +130,5 @@ if __name__ == "__main__":
     z=draw_net(pop.config, genome, view=True, filename= "image", show_unused = False,
                title = "Visualisation of best genome",
                node_names = DEFAULT_NODE_NAMES)
+    
+    

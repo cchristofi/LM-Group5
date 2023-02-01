@@ -114,16 +114,7 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
         model_output = np.array(net.activate(model_input)) * 2 - 1
         act = MAX_SPEED * model_output
         
-        #fitness function 1
-        #dis_green = distance_to_target(green)
-        #dis_red = distance_to_target(red)
         
-        #fitness function 2
-        #dis_green = distance_to_target(green)
-        #dis_red = distance_to_target(red, 1.46)
-        #in timestep_score: "distToRed":   (-1 * dis_red) / MAX_TIMESTEPS,
-        
-        #fitness function 3
         dis_green = distance_to_target(green) + 1.46 * (1-hasFoodInGrip)
         dis_red = distance_to_target(red)
 
@@ -137,7 +128,7 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
         timestep_score["Cumulative"] = sum([v for k, v in timestep_score.items() if k != "time"]) + (0 if t==0 else scores[-1]["Cumulative"])
 
         timestep_score = timestep_score | {f"irs{i}":v for i, v in enumerate(irs)} | {"green_x":green[0], "green_y":green[1], "red_x":red[0], "red_y":red[1]}
-        #print(f"{timestep_score=}")
+
         scores.append(timestep_score)
         
       
@@ -167,10 +158,10 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
     print(f"Genome: {genomeID},\tfitness: {fitness:.2f},\tdistToRed: {distToRed:.2f},\tdistToGreen: {distToGreen:.2f}")
     if genomeID in fitness_dict.keys():
         fitness_dict[genomeID]["fitness"] += fitness/len(POSSIBLE_BOTS)
-        fitness_dict[genomeID]["fitness_parts"] = {"distToRed": distToRed, "distToGreen": distToGreen, "BDF": BaseDetectFood}
+        fitness_dict[genomeID]["fitness_parts"] = {"t":t, "distToRed": distToRed, "distToGreen": distToGreen, "BDF": BaseDetectFood}
     else:
         fitness_dict[genomeID] = {"fitness":fitness/len(POSSIBLE_BOTS),
-                                  "fitness_parts": {"distToRed": distToRed, "distToGreen": distToGreen, "BDF": BaseDetectFood}}
+                                  "fitness_parts": {"t":t, "distToRed": distToRed, "distToGreen": distToGreen, "BDF": BaseDetectFood}}
         
 
 
@@ -233,7 +224,7 @@ class PoolLearner:
         connections = [genome.size()[1] for genome_id, genome in genomes]
         
         
-        
+
         tb.add_scalar("AvgFitness", sum(fitnesses)/len(fitnesses), self.generation)
         tb.add_scalar("MedFitness", np.median(fitnesses), self.generation)
         tb.add_scalar("MaxFitness", max(fitnesses), self.generation)
@@ -249,6 +240,7 @@ class PoolLearner:
             tb.add_scalar(f"Avg{part}", sum(scores)/len(scores), self.generation)
             tb.add_scalar(f"Max{part}", max(scores), self.generation)
             tb.add_scalar(f"Med{part}", np.median(scores), self.generation)
+            tb.add_scalar(f"Min{part}", min(scores), self.generation)
             tb.add_histogram(part, np.asarray(scores), self.generation)
 
 
@@ -301,7 +293,7 @@ if __name__ == "__main__":
     except:
         num_instances = 1
         
-    experiment_continuation = "Robobo Experiment 2023-01-31 19;16"  # Either like "Robobo Experiment <date> <time>" or None
+    experiment_continuation = None # Either like "Robobo Experiment <date> <time>" or None
     
     if experiment_continuation:
         experiment_name = experiment_continuation
