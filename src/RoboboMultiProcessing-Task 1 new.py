@@ -41,7 +41,7 @@ CONFIG = neat.config.Config(
 )
 
 SIMULATION_DEMO_PORT = 21000 if is_port_in_use(21000) else None
-POSSIBLE_BOTS= [""]#"#0"]#, "#2"]
+POSSIBLE_BOTS= ["#0"]#"#0"]#, "#2"]
 
 FOOD_DETECTION_THRESHOLD = 0.07
 MAX_SPEED = 75
@@ -55,46 +55,18 @@ def sort_checkpoint_population(pop):
         
     return sorted_pop
 
-def extract_cluster(hsv, mask):
-    masked = np.zeros(hsv.shape[:-1])
-    for m_bottom, m_top in mask:
-        masked += cv2.inRange(hsv, m_bottom, m_top)/255
-    
-    if masked.sum() == 0:
-        return [1.25, .75] 
-    
-    cols = np.average(masked, axis = 0)
-    x = np.average(np.arange(cols.size), weights = cols)
-    rows = np.average(masked, axis = 1)
-    y = np.average(np.arange(rows.size), weights = rows)
-
-    x = 2*x/hsv.shape[1] - 1
-    y = 1-y/hsv.shape[0]
-    return [x, y]
-
-
-def distance_to_target(target, bias=0):
-    distance_squared = np.square(target[0])+np.square(target[1])
-    distance = np.sqrt(distance_squared) #tussen 0 en 1.46 
-    
-    distance += (distance > 0 ) * bias 
-    
-    return distance 
-
-
          
 def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_run = True, example_run = False):
     rob = robobo.SimulationRobobo(bot_num).connect(port = portnum)
     
     rob.play_simulation()
-    rob.set_phone_pan(pan_position = 0*math.pi, pan_speed = .5)
-    tilt_degrees = 22.5
-    rob.set_phone_tilt(tilt_position =0.35 + (tilt_degrees/90)*1.55, tilt_speed = .1)
     
     scores = []
     for t in range(MAX_TIMESTEPS):
-        
-        irs = rob.read_irs()
+        try:
+            irs = rob.read_irs()
+        except:
+            irs = [False for i in range(8)]
         model_input = np.array([x if x!=False else .3 for x in irs])
 
         model_output = np.array(net.activate(model_input)) * 2 - 1
@@ -105,7 +77,9 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
         timestep_score = {
             "time": t,
             "logDistance2blocks":   (sum(np.log(np.array([x for x in irs if x != False]))) / 10) / MAX_TIMESTEPS,
-            "powerDifferential": (- np.abs(model_output[0] - model_output[1])/2) / MAX_TIMESTEPS}
+            "powerDifferential": (- np.abs(model_output[0] - model_output[1])/2) / MAX_TIMESTEPS,
+            "power": (np.abs(model_output[0] + model_output[1])/2) / MAX_TIMESTEPS,
+            "powerPositive": (sum([x for x in model_output if x>0]) /2) / MAX_TIMESTEPS}
         
         timestep_score["Cumulative"] = sum([v for k, v in timestep_score.items() if k != "time"]) + (0 if t==0 else scores[-1]["Cumulative"])
 
@@ -119,7 +93,15 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
     # Accumulation of the different fitness parts
     logDistance2blocks   = sum([x["logDistance2blocks"]   for x in scores])
     powerDifferential = sum([x["powerDifferential"] for x in scores])
+    power = sum([x["power"] for x in scores])
+    powerPositive = sum([x["powerPositive"] for x in scores])
+    
+    #Fitness 1
     fitness = logDistance2blocks + powerDifferential
+    #Fitness 2
+    fitness = logDistance2blocks + power
+    #Fitness 3
+    fitness = logDistance2blocks + powerPositive
 
     scores.append({"time":MAX_TIMESTEPS, "Cumulative":fitness})
 
@@ -136,13 +118,13 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
 
         
     # Returning the found fitness (and the fitness parts) to the evaluate function
-    print(f"Genome: {genomeID},\tfitness: {fitness:.2f},\logDistance2blocks: {logDistance2blocks:.2f},\powerDifferential: {powerDifferential:.2f}")
+    print(f"Genome: {genomeID}\tfitness: {fitness:.2f}\tlogDistance2blocks: {logDistance2blocks:.2f}\tpowerDifferential: {powerDifferential:.2f}\tpower: {power:.2f}\tpowerPositive: {powerPositive:.2f}")
     if genomeID in fitness_dict.keys():
         fitness_dict[genomeID]["fitness"] += fitness/len(POSSIBLE_BOTS)
-        fitness_dict[genomeID]["fitness_parts"] = {"t":t, "logDistance2blocks": logDistance2blocks, "powerDifferential": powerDifferential, "BDF": BaseDetectFood}
+        fitness_dict[genomeID]["fitness_parts"] = {"t":t, "logDistance2blocks": logDistance2blocks, "powerDifferential": powerDifferential, "power": power, "powerPositive": powerPositive}
     else:
         fitness_dict[genomeID] = {"fitness":fitness/len(POSSIBLE_BOTS),
-                                  "fitness_parts": {"t":t, "logDistance2blocks": logDistance2blocks, "powerDifferential": powerDifferential, "BDF": BaseDetectFood}}
+                                  "fitness_parts": {"t":t, "logDistance2blocks": logDistance2blocks, "powerDifferential": powerDifferential, "power": power, "powerPositive": powerPositive}}
         
 
 
@@ -222,6 +204,7 @@ class PoolLearner:
             tb.add_scalar(f"Max{part}", max(scores), self.generation)
             tb.add_scalar(f"Med{part}", np.median(scores), self.generation)
             tb.add_scalar(f"Min{part}", min(scores), self.generation)
+            tb.add_scalar(f"std{part}", np.std(scores), self.generation)
             tb.add_histogram(part, np.asarray(scores), self.generation)
 
 
@@ -274,7 +257,7 @@ if __name__ == "__main__":
     except:
         num_instances = 1
         
-    experiment_continuation = "Robobo Experiment 2023-02-01 16;55"  # Either like "Robobo Experiment <date> <time>" or None
+    experiment_continuation = None  # Either like "Robobo Experiment <date> <time>" or None
     
     if experiment_continuation:
         experiment_name = experiment_continuation
