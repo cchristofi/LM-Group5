@@ -122,13 +122,36 @@ def draw_net(config, genome, view=False, filename=None, node_names=None, show_di
 
 #%%
 if __name__ == "__main__":
-    pop = neat.Checkpointer.read_checkpoint("checkpoints/Robobo Experiment 2023-02-01 13;05 - Generation 0")
+    pop = neat.Checkpointer.read_checkpoint("neat-checkpoint--1")
     
     best_genome = max(pop.population, key = lambda x: pop.population.get(x).fitness)
     genome = pop.population[best_genome]
     
+    #z=draw_net(pop.config, genome, view=True, filename= "image", show_unused = False,
+    #           title = "Visualisation of best genome",
+    #           node_names = DEFAULT_NODE_NAMES)
+    
+    for k, node in genome.nodes.items():
+        node.bias = 0.5
+        
+    genome.connect_full_direct(pop.config.genome_config)
+
+    # Target - x:
+    genome.connections[(-1, 0)].weight = -.75
+    genome.connections[(-1, 1)].weight = .75
+    genome.connections[(-3, 0)].weight = -1
+    genome.connections[(-3, 1)].weight = 1
+    
+    #Target - y
+    genome.connections[(-2, 0)].weight = .75
+    genome.connections[(-2, 1)].weight = .75
+
+    genome.connections[(-4, 0)].weight = 1
+    genome.connections[(-4, 1)].weight = 1
+    genome.fitness = 1e9
     z=draw_net(pop.config, genome, view=True, filename= "image", show_unused = False,
                title = "Visualisation of best genome",
                node_names = DEFAULT_NODE_NAMES)
-    
-    
+
+    pop.add_reporter(neat.Checkpointer("testing"))
+    pop.reporters.reporters[0].save_checkpoint(pop.config, pop.population, pop.species, -1)

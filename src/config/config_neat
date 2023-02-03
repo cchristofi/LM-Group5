@@ -5,7 +5,7 @@ fitness_criterion      = max
 fitness_threshold      = 10
 no_fitness_termination = False 
 pop_size               = 50
-reset_on_extinction    = False
+reset_on_extinction    = True
 
 [DefaultStagnation]
 species_fitness_func = mean
@@ -18,7 +18,7 @@ survival_threshold = 0.2
 min_species_size   = 10
 
 [DefaultSpeciesSet]
-compatibility_threshold = 2
+compatibility_threshold = 3
 
 [DefaultGenome]
 # node activation options

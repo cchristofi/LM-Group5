@@ -93,41 +93,23 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
     
     scores = []
     for t in range(MAX_TIMESTEPS):
-        if rob.base_detects_food():
-            break
+        
         irs = rob.read_irs()
-        front_middle_irs = irs[5]
-        cam = rob.get_image_front()
-        hsv = cv2.cvtColor(cam, cv2.COLOR_BGR2HSV)
-        
-        hasFoodInGrip = front_middle_irs and front_middle_irs < FOOD_DETECTION_THRESHOLD
-        
-        if hasFoodInGrip:
-            green = extract_cluster(hsv, mask = [((35, 70, 70), (70, 255, 255))])
-            red = [0, 0]
-        else:
-            green = [0, 0]
-            red = extract_cluster(hsv, mask = [((170, 70, 70), (180, 255, 255)), ((0, 70, 70), (10, 255, 255))])
-        
-        model_input = np.array(green + red) #[x if x!=False else .3 for x in irs] + 
-        
+        model_input = np.array([x if x!=False else .3 for x in irs])
+
         model_output = np.array(net.activate(model_input)) * 2 - 1
         act = MAX_SPEED * model_output
         
         
-        dis_green = distance_to_target(green) + 1.46 * (1-hasFoodInGrip)
-        dis_red = distance_to_target(red)
-
-        
         # Found scores per timestep
         timestep_score = {
             "time": t,
-            "distToRed":   (-1 * dis_red) / MAX_TIMESTEPS,
-            "distToGreen": (-1 * dis_green) / MAX_TIMESTEPS}
+            "logDistance2blocks":   (sum(np.log(np.array([x for x in irs if x != False]))) / 10) / MAX_TIMESTEPS,
+            "powerDifferential": (- np.abs(model_output[0] - model_output[1])/2) / MAX_TIMESTEPS}
         
         timestep_score["Cumulative"] = sum([v for k, v in timestep_score.items() if k != "time"]) + (0 if t==0 else scores[-1]["Cumulative"])
 
-        timestep_score = timestep_score | {f"irs{i}":v for i, v in enumerate(irs)} | {"green_x":green[0], "green_y":green[1], "red_x":red[0], "red_y":red[1]}
+        timestep_score = timestep_score | {f"irs{i}":v for i, v in enumerate(irs)}
 
         scores.append(timestep_score)
         
@@ -135,10 +117,9 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
         rob.move(act[0], act[1], 1000)
         
     # Accumulation of the different fitness parts
-    distToRed   = sum([x["distToRed"]   for x in scores])
-    distToGreen = sum([x["distToGreen"] for x in scores])
-    BaseDetectFood = 3*rob.base_detects_food()
-    fitness = distToRed + distToGreen + BaseDetectFood
+    logDistance2blocks   = sum([x["logDistance2blocks"]   for x in scores])
+    powerDifferential = sum([x["powerDifferential"] for x in scores])
+    fitness = logDistance2blocks + powerDifferential
 
     scores.append({"time":MAX_TIMESTEPS, "Cumulative":fitness})
 
@@ -155,13 +136,13 @@ def simulation(portnum, bot_num, net, fitness_dict = None, genomeID = None, log_
 
         
     # Returning the found fitness (and the fitness parts) to the evaluate function
-    print(f"Genome: {genomeID},\tfitness: {fitness:.2f},\tdistToRed: {distToRed:.2f},\tdistToGreen: {distToGreen:.2f}")
+    print(f"Genome: {genomeID},\tfitness: {fitness:.2f},\logDistance2blocks: {logDistance2blocks:.2f},\powerDifferential: {powerDifferential:.2f}")
     if genomeID in fitness_dict.keys():
         fitness_dict[genomeID]["fitness"] += fitness/len(POSSIBLE_BOTS)
-        fitness_dict[genomeID]["fitness_parts"] = {"t":t, "distToRed": distToRed, "distToGreen": distToGreen, "BDF": BaseDetectFood}
+        fitness_dict[genomeID]["fitness_parts"] = {"t":t, "logDistance2blocks": logDistance2blocks, "powerDifferential": powerDifferential, "BDF": BaseDetectFood}
     else:
         fitness_dict[genomeID] = {"fitness":fitness/len(POSSIBLE_BOTS),
-                                  "fitness_parts": {"t":t, "distToRed": distToRed, "distToGreen": distToGreen, "BDF": BaseDetectFood}}
+                                  "fitness_parts": {"t":t, "logDistance2blocks": logDistance2blocks, "powerDifferential": powerDifferential, "BDF": BaseDetectFood}}
         
 
 
